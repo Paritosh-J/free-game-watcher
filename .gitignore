@@ -4,5 +4,4 @@
 .idea/modules.xml
 .idea/vcs.xml
 .idea/inspectionProfiles/profiles_settings.xml
-backend/app/__pycache__/config.cpython-313.pyc
-backend/app/__pycache__/main.cpython-313.pyc
+backend/app/__pycache__/
