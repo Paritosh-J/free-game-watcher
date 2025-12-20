@@ -19,7 +19,7 @@ app = FastAPI(title="FreeGameWatcher - Backend (MVP)")
 
 @app.on_event("startup")
 async def on_startup():
-    logger.info("Initializing DB and scheduler...")
+    logger.info("ℹ️  Initializing DB and scheduler...")
     await init_db()
     start_scheduler()
 
@@ -31,6 +31,8 @@ async def on_shutdown():
 
 @app.post("/subscribe")
 async def subscribe(payload: SubscribeIn, background_tasks: BackgroundTasks):
+    logger.info("ℹ️  Subscribing...")
+    
     phone = normalize_phone(payload.phone)
     # create or find user (unverified)
     async with get_session() as session:  # AsyncSession
@@ -49,12 +51,14 @@ async def subscribe(payload: SubscribeIn, background_tasks: BackgroundTasks):
     code = await create_and_store_otp(phone)
     # send SMS async (non-blocking) - use background task
     background_tasks.add_task(send_sms_otp, phone, code)
+    
     return {"success": True, "message": "OTP sent (if SMS provider configured). Please verify."}
 
 
 @app.post("/verify")
 async def verify(payload: VerifyIn):
     phone = normalize_phone(payload.phone)
+    
     ok = await verify_otp(phone, payload.code)
     if not ok:
         raise HTTPException(status_code=400, detail="Invalid or expired OTP.")
@@ -70,11 +74,14 @@ async def verify(payload: VerifyIn):
         else:
             user.verified = True
         await session.commit()
+    
     return {"success": True, "message": "Phone verified and subscribed for alerts."}
 
 
 @app.post("/unsubscribe")
 async def unsubscribe(payload: UnsubscribeIn):
+    logger.info("ℹ️  Unsubscribing...")
+    
     phone = normalize_phone(payload.phone)
     async with get_session() as session:
         q = select(User).where(User.phone == phone)
@@ -84,6 +91,7 @@ async def unsubscribe(payload: UnsubscribeIn):
             raise HTTPException(status_code=404, detail="Phone not found.")
         await session.delete(user)
         await session.commit()
+    
     return {"success": True, "message": "Unsubscribed and removed."}
 
 
