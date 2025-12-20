@@ -35,7 +35,7 @@ async def poll_and_alert():
         g = normalize_gamerpower_item(item)
         games[g["id"]] = g
         
-    # normalie epic official
+    # normalize epic official
     for item in epic_raw:
         gid = str(item.get("id") or item.get("title"))
         games[gid] = {"id": gid, "title": item.get["title"], "url": item.get("url"), "platform": "epic", "ends_at": item.get("end_date")}
@@ -103,10 +103,12 @@ def start_scheduler():
     scheduler.add_job(poll_and_alert, IntervalTrigger(minutes=interval), id="poll_and_alert", replace_existing=True, next_run_time=None)
     
     scheduler.start()
+    logger.info("✅ Scheduler start successful")
 
 
 def shutdown_scheduler():
     try:
         scheduler.shutdown(wait=False)
+        logger.info("✅ Scheduler shutdown successful")
     except Exception:
         logger.exception("❌ Error shutting down scheduler")
