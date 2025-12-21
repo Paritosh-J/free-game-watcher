@@ -41,10 +41,11 @@ async def poll_and_alert():
         
     # now if no games, nothing to do
     if not games:
-        logger.info("No free games found in this poll.")
+        logger.info("ℹ️  No free games found in this poll.")
         return
     
     # load users and decide which to alert
+    logger.info("ℹ️  Loading users for alerting...")
     async with get_session() as session:
         result = await session.execute(select(User).where(User.verified == True))
         users: List[User] = result.scalars().all()
@@ -95,19 +96,19 @@ async def poll_and_alert():
             
 
 def start_scheduler():
-    logger.info("ℹ️  Starting scheduler")
+    logger.info("ℹ️  Starting scheduler.")
     
     scheduler.remove_all_jobs()
     interval = settings.POLL_INTERVAL_MINUTES
     scheduler.add_job(poll_and_alert, IntervalTrigger(minutes=interval), id="poll_and_alert", replace_existing=True, next_run_time=None)
     
     scheduler.start()
-    logger.info("✅ Scheduler start successful")
+    logger.info("✅ Scheduler start successful.")
 
 
 def shutdown_scheduler():
     try:
         scheduler.shutdown(wait=False)
-        logger.info("✅ Scheduler shutdown successful")
+        logger.info("✅ Scheduler shutdown successful.")
     except Exception:
-        logger.exception("❌ Error shutting down scheduler")
+        logger.exception("❌ Error shutting down scheduler.")
