@@ -8,8 +8,7 @@ from app.models import User, AlertedGame
 from app.messaging import send_whatsapp_message
 from sqlmodel import select
 from datetime import datetime, timezone
-from sqlmodel.ext.asyncio.session import AsyncSessionq
-from types import List
+from typing import List
 
 logger = logging.getLogger("scheduler")
 scheduler = AsyncIOScheduler()

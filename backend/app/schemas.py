@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 
 class SubscribeIn(BaseModel):
     phone: constr(strip_whitespace=True, min_length=6, max_length=20) # type: ignore
