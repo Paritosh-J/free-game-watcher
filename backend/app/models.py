@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field, Column, String, Boolean, DateTime
+from sqlmodel import SQLModel, Field, Column, String
 from typing import Optional
 from datetime import datetime, timezone
 
@@ -6,14 +6,14 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     phone: str = Field(index=True, sa_column=Column(String, unique=True, nullable=False))
     verified: bool = Field(default=False)
-    created_at = datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     
 class OTP(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     phone: str = Field(index=True, sa_column=Column(String, nullable=False))
     code: str = Field(sa_column=Column(index=True, nullable=False))
     expires_at: datetime = Field(nullable=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     
 class AlertedGame(SQLModel, table=True):
     """
