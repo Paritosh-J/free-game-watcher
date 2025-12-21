@@ -1,7 +1,6 @@
 import logging
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlmodel import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from app.config import settings
 
@@ -24,7 +23,7 @@ except Exception as e:
     raise
 
 async def init_db():
-    logger.info("ℹ️ Initializing database: attempting to create all tables if they do not exist.")
+    logger.info("ℹ️  Initializing database: attempting to create all tables if they do not exist.")
     try:
         # create tables (synchronous call to metadata create_all via run_sync)
         async with engine.begin() as conn:
@@ -36,5 +35,5 @@ async def init_db():
         
 # helper to get async session
 def get_session() -> AsyncSession:
-    logger.debug("ℹ️ Providing a new asynchronous database session.")
+    logger.debug("ℹ️   Providing a new asynchronous database session.")
     return AsyncSession(engine)
