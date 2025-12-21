@@ -1,3 +1,4 @@
+import os
 import uvicorn
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from app.config import settings
@@ -7,9 +8,9 @@ from app.otp import create_and_store_otp, verify_otp, cleanup_expired_otps
 from app.messaging import send_sms_otp
 from app.db import init_db, get_session
 from app.models import User
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
 from app.scheduler import start_scheduler, shutdown_scheduler
+from app.routes import debug
+from sqlmodel import select
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -20,8 +21,14 @@ app = FastAPI(title="FreeGameWatcher - Backend (MVP)")
 @app.on_event("startup")
 async def on_startup():
     logger.info("ℹ️  Initializing DB and scheduler...")
+    
     await init_db()
-    start_scheduler()
+    
+    # prevent scheduler from running in reload parent process
+    if os.environ.get("RUN_MAIN") == "true" or os.environ.get("UVICORN_RELOAD") != "true":
+        start_scheduler()
+    else:
+        logger.info("⏭️  Scheduler skipped in reload watcher process")
 
 
 @app.on_event("shutdown")
@@ -80,7 +87,7 @@ async def verify(payload: VerifyIn):
 
 @app.post("/unsubscribe")
 async def unsubscribe(payload: UnsubscribeIn):
-    logger.info("ℹ️  Unsubscribing...")
+    logger.info(f"ℹ️  Unsubscribing {payload.phone}")
     
     phone = normalize_phone(payload.phone)
     async with get_session() as session:
@@ -97,6 +104,7 @@ async def unsubscribe(payload: UnsubscribeIn):
 
 @app.get("/status/{phone}")
 async def status(phone: str):
+    logger.info(f"ℹ️  Checking subscription status for {phone}")
     phone = normalize_phone(phone)
     async with get_session() as session:
         q = select(User).where(User.phone == phone)
@@ -111,6 +119,8 @@ async def status(phone: str):
 async def debug_cleanup_otps():
     await cleanup_expired_otps()
     return {"ok": True}
+
+app.include_router(debug.router)
 
 
 if __name__ == "__main__":
