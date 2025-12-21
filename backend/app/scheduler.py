@@ -18,7 +18,7 @@ async def poll_and_alert():
     
     # fetch from gamerpower (both steam and epic)
     gp_steam = await fetch_gamerpower(platform="steam")
-    gp_epic = await fetch_epic_freegames(platform="epic-games-store")
+    gp_epic = await fetch_epic_freegames()
     epic_raw = await fetch_epic_freegames()
     
     # collect normalized games into dict by id
@@ -37,7 +37,7 @@ async def poll_and_alert():
     # normalize epic official
     for item in epic_raw:
         gid = str(item.get("id") or item.get("title"))
-        games[gid] = {"id": gid, "title": item.get["title"], "url": item.get("url"), "platform": "epic", "ends_at": item.get("end_date")}
+        games[gid] = {"id": gid, "title": item.get("title"), "url": item.get("url"), "platform": "epic", "ends_at": item.get("end_date")}
         
     # now if no games, nothing to do
     if not games:
@@ -47,52 +47,59 @@ async def poll_and_alert():
     # load users and decide which to alert
     logger.info("ℹ️  Loading users for alerting...")
     async with get_session() as session:
-        result = await session.execute(select(User).where(User.verified == True))
-        users: List[User] = result.scalars().all()
+        result = await session.exec(
+            select(User).where(User.verified == True)
+        )
+        users = result.all()
         
         for user in users:
-            # for each game, check if alerted earlier
             to_alert = []
+
+            # for each game, check if alerted earlier
             for gid, g in games.items():
-                q = select(AlertedGame).where(AlertedGame.user_id == user.id, AlertedGame.game_id == str(gid))
-                res = await session.execute(q)
-                already = res.scalar_one_or_none()
-                
+                q = select(AlertedGame).where(
+                    AlertedGame.user_id == user.id,
+                    AlertedGame.game_id == str(gid),
+                )
+
+                res = await session.exec(q)
+                already = res.first()
+
                 if not already:
                     to_alert.append(g)
-                    
+
             if not to_alert:
                 continue
-            
-        # compose message
-        lines = ["🎮 *Free Game Alert!*", ""]
-        for g in to_alert:
-            title = g.get("title")
-            url = g.get("url") or ""
-            ends_at = g.get("ends_at") or ""
-            lines.append(f"• {title} — ends: {ends_at}\n  {url}")
-        
-        lines.append("")
-        lines.append("Grab them quickly!!!")
-        
-        message_text = "\n".join(lines)
-        
-        # send alert via WhatsApp
-        sent = await send_whatsapp_message(user.phone, message_text)
-        if sent:
-            # record alerted game
+
+            lines = ["🎮 *Free Game Alert!*", ""]
             for g in to_alert:
-                ag = AlertedGame(user_id=user.id, game_id=str(g.get("id")), game_title=g.get("title"))
-                session.add(ag)
-                
-            # update user's last_alert_at
-            user.last_alert_at = datetime.now(timezone.utc)
-            await session.commit()
-            
-            logger.info(f"ℹ️  Sent {len(to_alert)} alerts to user {user.phone}")
-        
-        else:
-            logger.warning(f"❌ Failed to send alert to {user.phone}")
+                lines.append(
+                    f"• {g.get('title')} — ends: {g.get('ends_at')}\n  {g.get('url')}"
+                )
+
+            lines.append("")
+            lines.append("Grab them quickly!!!")
+
+            message_text = "\n".join(lines)
+
+            sent = await send_whatsapp_message(user.phone, message_text)
+
+            if sent:
+                for g in to_alert:
+                    session.add(
+                        AlertedGame(
+                            user_id=user.id,
+                            game_id=str(g.get("id")),
+                            game_title=g.get("title"),
+                        )
+                    )
+
+                user.last_alert_at = datetime.now(timezone.utc)
+                await session.commit()
+
+                logger.info(f"✅ Sent {len(to_alert)} alerts to {user.phone}")
+            else:
+                logger.warning(f"❌ Failed to send alert to {user.phone}")
             
 
 def start_scheduler():
