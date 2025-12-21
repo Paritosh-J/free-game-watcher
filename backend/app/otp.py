@@ -16,7 +16,7 @@ OTP_TTL_SECONDS = 5 * 60 # 5 minutes
 def _generate_code() -> str:
     # 6-digit numeric OTP
     code = f"{random.randint(100000, 999999)}"
-    logger.debug(f"ℹ️ Generated new OTP code: {code}")
+    logger.debug(f"ℹ️  Generated new OTP code: {code}")
     return code
 
 async def create_and_store_otp(phone: str) -> str:
@@ -31,7 +31,7 @@ async def create_and_store_otp(phone: str) -> str:
             session.add(otp)
             
             await session.commit()
-            logger.info(f"ℹ️ Stored new OTP for phone {phone}. Expires at {expires_at.isoformat()}")
+            logger.info(f"ℹ️  Stored new OTP for phone {phone}. Expires at {expires_at.isoformat()}")
             
             return code
     except Exception as e:
@@ -41,7 +41,7 @@ async def create_and_store_otp(phone: str) -> str:
 
 
 async def verify_otp(phone: str, code: str) -> bool:
-    logger.info(f"ℹ️ Attempting to verify OTP for phone {phone} with code provided.")
+    logger.info(f"ℹ️  Attempting to verify OTP for phone {phone} with code provided.")
     
     now = datetime.now(timezone.utc)
     
@@ -65,7 +65,7 @@ async def verify_otp(phone: str, code: str) -> bool:
 
 
 async def cleanup_expired_otps():
-    logger.info("ℹ️ Starting cleanup of expired OTPs.")
+    logger.info("ℹ️  Starting cleanup of expired OTPs.")
     now = datetime.now(timezone.utc)
     
     try:

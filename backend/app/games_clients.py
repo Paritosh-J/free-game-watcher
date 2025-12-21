@@ -43,7 +43,7 @@ async def fetch_epic_freegames() -> List[Dict]:
     
     async with httpx.AsyncClient(timeout=20.0) as client:
         try:
-            r = await client.send(url, params=params)
+            r = await client.get(url, params=params)
             r.raise_for_status()
             data = r.json()
             out = []
