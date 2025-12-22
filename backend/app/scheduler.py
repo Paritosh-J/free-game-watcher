@@ -7,11 +7,10 @@ from app.db import get_session
 from app.models import User, AlertedGame
 from app.messaging import send_whatsapp_message
 from sqlmodel import select
-from datetime import datetime, timezone
-from typing import List
+from datetime import datetime, timezone, timedelta
 
 logger = logging.getLogger("scheduler")
-scheduler = AsyncIOScheduler()
+scheduler = AsyncIOScheduler(timezone="UTC")
 
 async def poll_and_alert():
     logger.info("ℹ️  Poll job started: fetching games...")
@@ -106,10 +105,25 @@ def start_scheduler():
     logger.info("ℹ️  Starting scheduler.")
     
     scheduler.remove_all_jobs()
-    interval = settings.POLL_INTERVAL_MINUTES
-    scheduler.add_job(poll_and_alert, IntervalTrigger(minutes=interval), id="poll_and_alert", replace_existing=True, next_run_time=None)
     
+    interval = settings.POLL_INTERVAL_MINUTES
+    # schedule first run immediately for testing
+    first_run = datetime.now(timezone.utc) + timedelta(seconds=5)
+    # set trigger
+    trigger = IntervalTrigger(
+        minutes=interval, 
+        start_date=first_run, 
+        timezone="UTC"
+    )
+    
+    scheduler.add_job(
+        poll_and_alert,
+        trigger=trigger,
+        id="poll_and_alert",
+        replace_existing=True
+    )
     scheduler.start()
+    
     logger.info("✅ Scheduler start successful.")
 
 
