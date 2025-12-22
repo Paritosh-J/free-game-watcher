@@ -71,5 +71,4 @@ async def send_whatsapp_message(phone: str, message_text: str) -> bool:
     else:
         # fallback: print to console
         logger.info(f"ℹ️  [DEV MODE] WhatsApp message to {phone}: {message_text}")
-        print(f"ℹ️  [DEV MODE] WhatsApp message to {phone}:\n{message_text}")
         return True
