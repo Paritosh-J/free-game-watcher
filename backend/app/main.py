@@ -18,6 +18,12 @@ logger = logging.getLogger("freegamewatcher")
 
 app = FastAPI(title="FreeGameWatcher - Backend (MVP)")
 
+@app.get("/health")
+async def health_check():
+    from datetime import datetime, timezone
+    logger.info("ℹ️  Health endpoint: OK✅")
+    return {"ok": True, "now": datetime.now(timezone.utc).isoformat()}
+
 @app.on_event("startup")
 async def on_startup():
     logger.info("ℹ️  Initializing DB and scheduler...")
@@ -100,6 +106,16 @@ async def unsubscribe(payload: UnsubscribeIn):
         await session.commit()
     
     return {"success": True, "message": "Unsubscribed and removed."}
+
+
+@app.get("/test-poll-now")
+async def run_poll_now():
+    logging.debug("ℹ️  Testing manual poll now...")
+    
+    from app.scheduler import poll_and_alert
+    await poll_and_alert()
+    
+    return {"message": "Poll job executed manually"}
 
 
 @app.get("/status/{phone}")
