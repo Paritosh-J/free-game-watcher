@@ -9,7 +9,6 @@ from app.messaging import send_sms_otp
 from app.db import init_db, get_session
 from app.models import User
 from app.scheduler import start_scheduler, shutdown_scheduler
-from app.routes import debug
 from sqlmodel import select
 import logging
 
@@ -135,8 +134,6 @@ async def status(phone: str):
 async def debug_cleanup_otps():
     await cleanup_expired_otps()
     return {"ok": True}
-
-app.include_router(debug.router)
 
 
 if __name__ == "__main__":
