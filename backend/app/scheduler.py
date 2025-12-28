@@ -81,6 +81,7 @@ async def poll_and_alert():
 
             message_text = "\n".join(lines)
 
+            # send alert via WhatsApp
             sent = await send_whatsapp_message(user.phone, message_text)
 
             if sent:
@@ -99,6 +100,10 @@ async def poll_and_alert():
                 logger.info(f"✅ Sent {len(to_alert)} alerts to {user.phone}")
             else:
                 logger.warning(f"❌ Failed to send alert to {user.phone}")
+                try:
+                    await session.rollback()
+                except Exception:
+                    logger.exception("❌ Failed to rollback session after error.")
             
 
 def start_scheduler():
